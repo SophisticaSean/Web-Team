@@ -11,21 +11,15 @@ import (
 )
 
 type issue struct {
-	ID              string          `json:"ID,omitempty"`
-	Name            string          `json:"name"`
-	ObjCode         string          `json:"objCode,omitempty"`
-	CatID           string          `json:"categoryID"`
-	ParameterValues parameterValues `json:"parameterValues"`
+	ID              string                 `json:"ID,omitempty"`
+	Name            string                 `json:"name"`
+	ObjCode         string                 `json:"objCode,omitempty"`
+	CatID           string                 `json:"categoryID"`
+	ParameterValues map[string]interface{} `json:"parameterValues"`
 }
 
 type issues struct {
 	Issues []issue `json:"data"`
-}
-
-type parameterValues struct {
-	WebTeamField1 string `json:"DE:Web Team Field"`
-	WebTeamField2 string `json:"DE:Second Web Team Field"`
-	WebTeamField3 string `json:"DE:Last Field for Web Team"`
 }
 
 func main() {
@@ -49,10 +43,12 @@ func main() {
 	spew.Dump(returnList)
 
 	for _, issue := range returnList.Issues {
+		// cache our issue.ID
 		id := issue.ID
+		// set ID and ObjCode to blank so they're omitted from the JSON
 		issue.ID = ""
 		issue.ObjCode = ""
-		//issue.ParameterValues = parameterValues{}
+		// set our CatID
 		issue.CatID = "5850b48d0004df896e7bd11765f94020"
 		// Marshal our issue object into a json byte array
 		jsonIssueBytes, err := json.Marshal(issue)
