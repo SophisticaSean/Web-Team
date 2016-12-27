@@ -2,15 +2,19 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+
+	URL "net/url"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/levigross/grequests"
 )
 
 type issue struct {
-	ID              string          `json:"ID"`
+	ID              string          `json:"ID,omitempty"`
 	Name            string          `json:"name"`
-	ObjCode         string          `json:"objCode"`
+	ObjCode         string          `json:"objCode,omitempty"`
+	CatID           string          `json:"categoryID"`
 	ParameterValues parameterValues `json:"parameterValues"`
 }
 
@@ -45,17 +49,30 @@ func main() {
 	spew.Dump(returnList)
 
 	for _, issue := range returnList.Issues {
-		spew.Dump(issue)
-		//ro := &grequests.RequestOptions{}
+		id := issue.ID
+		issue.ID = ""
+		issue.ObjCode = ""
+		//issue.ParameterValues = parameterValues{}
+		issue.CatID = "5850b48d0004df896e7bd11765f94020"
+		// Marshal our issue object into a json byte array
+		jsonIssueBytes, err := json.Marshal(issue)
+		if err != nil {
+			panic(err)
+		}
 
-		//url := `https://chrisvirostko.attask-ondemand.com/attask/api-internal/optask/` + issue.ID + `/convertToTask?apiKey=apiKey=lqmy3lotx574xgujt5dkosqosld8fgzh&updates={"options":["preservePrimaryContact"],"task":{"name":"` + URL.QueryEscape(issue.Name) + `"},"categoryID":"5850b48d0004df896e7bd11765f94020","DE:Web Team Field":"` + WebTeamField1 + `"}&method=PUT`
-		//fmt.Println(url)
-		//resp, err := grequests.Put(url, ro)
-		//if err != nil {
-		//panic(err)
-		//}
+		// convert byte array to URL escaped string
+		jsonIssue := URL.QueryEscape(string(jsonIssueBytes))
 
-		//spew.Dump(resp.Bytes())
-		//spew.Dump(resp.StatusCode)
+		ro := &grequests.RequestOptions{}
+
+		url := `https://chrisvirostko.attask-ondemand.com/attask/api-internal/optask/` + id + `/convertToTask?apiKey=lqmy3lotx574xgujt5dkosqosld8fgzh&updates={"options":["preservePrimaryContact"],"task":` + jsonIssue + `}&method=PUT`
+		fmt.Println(url)
+		resp, err := grequests.Put(url, ro)
+		if err != nil {
+			panic(err)
+		}
+
+		spew.Dump(resp.Bytes())
+		spew.Dump(resp.StatusCode)
 	}
 }
